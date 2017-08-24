@@ -73,6 +73,12 @@ public class ColorfulRender implements GLSurfaceView.Renderer {
         v_position = GLES20.glGetAttribLocation(mProgram, "aPos");
         color_position = GLES20.glGetAttribLocation(mProgram, "v_color");
 
+
+        /**
+         * 这里先生成了一个缓冲区，然后将数据绑定到缓冲区当中
+         * 接下来所有的操作都是针对这个缓冲区的操作
+         */
+
         int [] temp = new int [1];
         GLES20.glGenBuffers(1, temp, 0);
         dataBuffer = temp[0];
