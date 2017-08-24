@@ -23,26 +23,30 @@ public class ColorfulRender implements GLSurfaceView.Renderer {
 
     private int mProgram;
     private final float vertext [] = {
-        -1, 1, 0,
-        1, 1, 0,
-        1, -1, 0,
+            0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // 右下
+            -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // 左下
+            0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // 顶部
     };
 
-    private final short position [] = {0, 1, 2};
+    private final float color[] = {
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+    };
 
 
     private FloatBuffer verextBuffer = null;
-    private ShortBuffer shortBuffer = null;
+    private FloatBuffer colorBuffer = null;
 
     private int v_position;
-    private int colorUniform;
+    private int color_position;
 
+
+    private int dataBuffer;
 
     public ColorfulRender(Context context) {
         this.context = context;
     }
-
-
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -50,13 +54,15 @@ public class ColorfulRender implements GLSurfaceView.Renderer {
                 .asFloatBuffer().put(vertext);
         verextBuffer.position(0);
 
-        shortBuffer = ByteBuffer.allocateDirect(position.length * 2).order(ByteOrder.nativeOrder())
-                .asShortBuffer().put(position);
-        shortBuffer.position(0);
+
+
+        colorBuffer = ByteBuffer.allocateDirect(color.length * 4).order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+        colorBuffer.position(0);
 
         mProgram = GLES20.glCreateProgram();
-        int vertexShader = Util.createShade(GLES20.GL_VERTEX_SHADER, Util.readTextResourceFromRaw(context, R.raw.vertex));
-        int fragmentShader = Util.createShade(GLES20.GL_FRAGMENT_SHADER, Util.readTextResourceFromRaw(context, R.raw.fragment));
+        int vertexShader = Util.createShade(GLES20.GL_VERTEX_SHADER, Util.readTextResourceFromRaw(context, R.raw.color_vertex));
+        int fragmentShader = Util.createShade(GLES20.GL_FRAGMENT_SHADER, Util.readTextResourceFromRaw(context, R.raw.color_fragment));
         GLES20.glAttachShader(mProgram, vertexShader);
         GLES20.glAttachShader(mProgram, fragmentShader);
         GLES20.glLinkProgram(mProgram);
@@ -65,26 +71,34 @@ public class ColorfulRender implements GLSurfaceView.Renderer {
 
 
         v_position = GLES20.glGetAttribLocation(mProgram, "aPos");
+        color_position = GLES20.glGetAttribLocation(mProgram, "v_color");
+
+        int [] temp = new int [1];
+        GLES20.glGenBuffers(1, temp, 0);
+        dataBuffer = temp[0];
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataBuffer);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, verextBuffer.limit() * 4, verextBuffer, GLES20.GL_STATIC_DRAW);
+
+
         GLES20.glEnableVertexAttribArray(v_position);
         GLES20.glVertexAttribPointer(v_position, 3, GLES20.GL_FLOAT, false,
-                12, verextBuffer);
+                24, 0);
 
-
-        colorUniform = GLES20.glGetUniformLocation(mProgram, "color");
+        GLES20.glEnableVertexAttribArray(color_position);
+        GLES20.glVertexAttribPointer(color_position, 3, GLES20.GL_FLOAT, false,
+                24, 12);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES20.glViewport(0,0, width, height);
+        GLES20.glViewport(0, 0, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-
-        long colorValue = System.currentTimeMillis() % 256;
-        GLES20.glUniform4f(colorUniform, 1f, Math.abs(colorValue - 256), colorValue, 1f);
-
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glClearColor(0f, 0f, 0f, 0f);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
     }
 }
