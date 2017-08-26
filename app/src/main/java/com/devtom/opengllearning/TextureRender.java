@@ -1,12 +1,9 @@
 package com.devtom.opengllearning;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
-import android.opengl.Matrix;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,7 +12,6 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
@@ -46,7 +42,8 @@ public class TextureRender implements GLSurfaceView.Renderer {
     private int texture;
     private int textureUniform;
     private int matrix;
-
+    private int watermark;
+    private int watermarkUniform;
 
     private float texure [] = {
             0f, 0f,
@@ -94,8 +91,13 @@ public class TextureRender implements GLSurfaceView.Renderer {
         textureUniform = GLES20.glGetUniformLocation(program, "u_samplerTexture");
         GLES20.glUniform1i(textureUniform, 0);
 
+        watermarkUniform = GLES20.glGetUniformLocation(program, "watermark");
+        GLES20.glUniform1i(watermarkUniform, 1);
+
+
         try {
-            texture = createTexture(BitmapFactory.decodeStream(context.getAssets().open("texture.png")));
+            texture = Util.createTexture(BitmapFactory.decodeStream(context.getAssets().open("texture.png")));
+            watermark = Util.createTexture(BitmapFactory.decodeStream(context.getAssets().open("watermark.png")));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,7 +113,10 @@ public class TextureRender implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, watermark);
 
         // 用 glDrawElements 来绘制，mVertexIndexBuffer 指定了顶点绘制顺序
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, position.length,
@@ -119,32 +124,5 @@ public class TextureRender implements GLSurfaceView.Renderer {
     }
 
 
-    public static int createTexture(Bitmap bitmap) {
-        int[] texture = new int[1];
-        if (bitmap != null && !bitmap.isRecycled()) {
-            // 生成纹理
-            GLES20.glGenTextures(1, texture, 0);
-            // 生成纹理
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0]);
-            // 设置缩小过滤为使用纹理中坐标最接近的一个像素的颜色作为需要绘制的像素颜色
-            //            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-            //            //设置放大过滤为使用纹理中坐标最接近的若干个颜色，通过加权平均算法得到需要绘制的像素颜色
-            //            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-
-            // 设置环绕方向S，截取纹理坐标到[1/2n,1-1/2n]。将导致永远不会与border融合
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            // 设置环绕方向T，截取纹理坐标到[1/2n,1-1/2n]。将导致永远不会与border融合
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-
-            // 根据以上指定的参数，生成一个2D纹理
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-            return texture[0];
-        }
-
-        return 0;
-    }
 
 }
