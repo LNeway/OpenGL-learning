@@ -2,6 +2,7 @@ package com.devtom.opengllearning;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.opengl.GLES10;
 import android.opengl.GLES20;
 
@@ -35,13 +36,11 @@ public class Util {
 
     }
 
-
-
-
     public static int createShade(int type, String code) {
         int shader = GLES20.glCreateShader(type);
         GLES20.glShaderSource(shader, code);
         GLES20.glCompileShader(shader);
         return shader;
     }
+
 }
