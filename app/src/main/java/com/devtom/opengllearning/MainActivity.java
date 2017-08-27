@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
         GLSurfaceView view = (GLSurfaceView) this.findViewById(R.id.gl);
         view.setEGLContextClientVersion(2);
         view.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-        view.setRenderer(new TextureRender(this));
+        view.setRenderer(new MatrixRender(this));
         view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     }
 }
