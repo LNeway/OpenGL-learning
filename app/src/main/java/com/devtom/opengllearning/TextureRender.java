@@ -86,7 +86,7 @@ public class TextureRender implements GLSurfaceView.Renderer {
 
         tex_position = GLES20.glGetAttribLocation(program, "v_texCoord");
         GLES20.glEnableVertexAttribArray(tex_position);
-        GLES20.glVertexAttribPointer(tex_position, 2, GLES20.GL_FLOAT, false, 0, texBuffer);
+        GLES20.glVertexAttribPointer(tex_position, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
 
         textureUniform = GLES20.glGetUniformLocation(program, "u_samplerTexture");
         GLES20.glUniform1i(textureUniform, 0);

@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.devtom.opengllearning.MainActivity">
+    tools:context="com.devtom.opengllearning.MainActivity"
+    android:orientation="vertical"
+    >
 
 
     <android.opengl.GLSurfaceView
         android:id="@+id/gl"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="300dp"
+        android:layout_height="300dp" />
+
+    <SeekBar
+        android:id="@+id/x"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        />
 
 
+    <SeekBar
+        android:id="@+id/y"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        />
 
 
-</android.support.constraint.ConstraintLayout>
+    <SeekBar
+        android:id="@+id/z"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        />
+</LinearLayout>

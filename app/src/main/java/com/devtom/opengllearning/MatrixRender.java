@@ -97,6 +97,9 @@ public class MatrixRender implements GLSurfaceView.Renderer {
          *
          * 这里的这里 @param eyeZ eye point Z，实际上是对应了设置透视投影 的 (near, far), 在这个区间
          * 内可以正常的看到图形，并且产生近大远小的效果，但是如果超出了这个范围就不会显示了。
+         *
+         *
+         *
          */
         Matrix.setLookAtM(mViewMatrix, 0, 0.25f, 0f, 4f, 0.25f, 0f, 0f, 0f, 1.0f, 0.0f);
         //计算变换矩阵
