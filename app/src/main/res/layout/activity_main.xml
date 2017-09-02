@@ -34,6 +34,54 @@
         android:id="@+id/z"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
+        android:max="100" />
+
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#FF00FF"
+        />
+
+
+    <SeekBar
+        android:id="@+id/lx"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
         android:max="100"
         />
+
+
+    <SeekBar
+        android:id="@+id/ly"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        />
+
+
+    <SeekBar
+        android:id="@+id/lz"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:max="100" />
+
+
+    <TextView
+        android:id="@+id/ltext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        />
+
+
 </LinearLayout>

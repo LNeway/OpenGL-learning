@@ -43,6 +43,13 @@ public class ThreeDimensionRender implements GLSurfaceView.Renderer {
      float eyeZ = 2f;
 
 
+    // Set our up vector. This is where our head would be pointing were we holding the camera.
+     float upX = 1f;
+     float upY = 1f;
+     float upZ = 1f;
+
+
+
     public ThreeDimensionRender(Context context) {
         this.context = context;
 
@@ -173,14 +180,10 @@ public class ThreeDimensionRender implements GLSurfaceView.Renderer {
         final float lookY = 0f;
         final float lookZ = 0f;
 
-        // Set our up vector. This is where our head would be pointing were we holding the camera.
-        final float upX = 1f;
-        final float upY = 1f;
-        final float upZ = 1f;
 
         Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 
-        Log.e("TAG", " eyeX, eyeY, eyeZ is"+  eyeX + "  "+ eyeY + " "+ eyeZ);
+        //Log.e("TAG", " eyeX, eyeY, eyeZ is"+  eyeX + "  "+ eyeY + " "+ eyeZ);
 
         Matrix.setIdentityM(mModelMatrix, 0);
         //Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
@@ -213,10 +216,10 @@ public class ThreeDimensionRender implements GLSurfaceView.Renderer {
         final float right = ratio;
         final float bottom = -1.0f;
         final float top = 1.0f;
-        final float near = 1.0f;
+        final float near = 1f;
         final float far = 10.0f;
 
-        Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
+        Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, bottom, top, near, far);
     }
 
     @Override
