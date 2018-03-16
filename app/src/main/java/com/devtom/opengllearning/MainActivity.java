@@ -47,7 +47,7 @@ public class MainActivity extends Activity {
         render = new WebpRender(this, view.getDraweeHolder());
         view.setRenderer(render);
         view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        view.setImageUri("http://s.lispon.moe/static/gift/20180315/risu.webp");
+        view.setImageUri("");
         //Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/test");
         //view.setImageUri(uri);
 
