@@ -1,12 +1,23 @@
 package com.devtom.opengllearning;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.controller.BaseControllerListener;
+import com.facebook.drawee.interfaces.DraweeController;
+import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.image.ImageInfo;
+
+import java.io.File;
+
+public class MainActivity extends Activity {
 
 
     private SeekBar xValue;
@@ -15,74 +26,36 @@ public class MainActivity extends Activity implements SeekBar.OnSeekBarChangeLis
 
     private TextView textView;
 
-    private ThreeDimensionRender render;
+    private GLSurfaceView.Renderer render;
     private SeekBar mLx;
     private SeekBar mLy;
     private SeekBar mLz;
     private TextView mLtext;
 
 
+    private ImageView imageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fresco.initialize(this);
         setContentView(R.layout.activity_main);
-        initView();
-        GLSurfaceView view = (GLSurfaceView) this.findViewById(R.id.gl);
+
+        WebPGLView view = (WebPGLView) this.findViewById(R.id.gl);
         view.setEGLContextClientVersion(2);
         view.setEGLConfigChooser(new MultisampleConfigChooser());
-
-        render = new ThreeDimensionRender(this);
+        render = new WebpRender(this, view.getDraweeHolder());
         view.setRenderer(render);
         view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        view.setImageUri("http://s.lispon.moe/static/gift/20180315/risu.webp");
+        //Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/test");
+        //view.setImageUri(uri);
 
-        xValue = (SeekBar) this.findViewById(R.id.x);
-        yValue = (SeekBar) this.findViewById(R.id.y);
-        zValue = (SeekBar) this.findViewById(R.id.z);
-
-        textView = (TextView) this.findViewById(R.id.text);
-
-        zValue.setOnSeekBarChangeListener(this);
-        xValue.setOnSeekBarChangeListener(this);
-        yValue.setOnSeekBarChangeListener(this);
-        mLx.setOnSeekBarChangeListener(this);
-        mLy.setOnSeekBarChangeListener(this);
-        mLz.setOnSeekBarChangeListener(this);
+        imageView = (ImageView) this.findViewById(R.id.fresco_view);
     }
 
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (seekBar == xValue) {
-            render.eyeX = progress - 50;
-        } else if (seekBar == yValue) {
-            render.eyeY = progress - 50;
-        } else if (seekBar == zValue) {
-            render.eyeZ = progress - 50;
-        } else if (seekBar == mLx) {
-            render.upX = progress - 50;
-        } else if (seekBar == mLy) {
-            render.upY = progress - 50;
-        } else  {
-            render.upZ = progress - 50;
-        }
-
-        textView.setText("(" + render.eyeX + " , " + render.eyeY + " , " + render.eyeZ + ")");
-        mLtext.setText("(" + render.upX + " , " + render.upY + " , " + render.upZ + ")");
+    public void setImage(Bitmap bitmap) {
+        //imageView.setImageBitmap(bitmap);
     }
 
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-
-    }
-
-    private void initView() {
-        mLx = (SeekBar) findViewById(R.id.lx);
-        mLy = (SeekBar) findViewById(R.id.ly);
-        mLz = (SeekBar) findViewById(R.id.lz);
-        mLtext = (TextView) findViewById(R.id.ltext);
-    }
 }
