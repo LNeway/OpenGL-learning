@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
 
 
     private ImageView imageView;
+    private SimpleDraweeView simpleDraweeView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,16 +49,24 @@ public class MainActivity extends Activity {
         render = new WebpRender(this);
         view.setRenderer(render);
         view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        //view.setImageUri("");
-        Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/texture");
-        view.setImageUri("http://s.lispon.moe/static/gift/20180315/risu.webp");
-
+        Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/jordan");
+        view.setImageUri(uri);
 
         imageView = (ImageView) this.findViewById(R.id.fresco_view);
+
+        DraweeController controller = Fresco.newDraweeControllerBuilder()
+                .setUri(uri)
+                .setAutoPlayAnimations(true)
+                .build();
+
+        simpleDraweeView = (SimpleDraweeView) this.findViewById(R.id.fresco_view2);
+        simpleDraweeView.setController(controller);
+
+
     }
 
     public void setImage(Bitmap bitmap) {
-        imageView.setImageBitmap(bitmap);
+        //imageView.setImageBitmap(bitmap);
     }
 
 }
