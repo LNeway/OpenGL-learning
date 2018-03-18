@@ -29,7 +29,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by liuwei64 on 2018/3/16.
  */
 
-public class WebPGLView extends GLSurfaceView implements Drawable.Callback {
+public class WebPGLView extends GLSurfaceView  {
 
     private DraweeHolder mDraweeHolder;
     private Drawable currentDrawable;
