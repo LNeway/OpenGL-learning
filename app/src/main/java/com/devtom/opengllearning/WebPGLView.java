@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -28,10 +29,11 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by liuwei64 on 2018/3/16.
  */
 
-public class WebPGLView extends GLSurfaceView {
+public class WebPGLView extends GLSurfaceView implements Drawable.Callback {
 
     private DraweeHolder mDraweeHolder;
-
+    private Drawable currentDrawable;
+    private WebpRender render;
 
     public WebPGLView(Context context) {
         super(context);
@@ -49,6 +51,18 @@ public class WebPGLView extends GLSurfaceView {
         mDraweeHolder.getTopLevelDrawable().setCallback(this);
     }
 
+
+    @Override
+    public void setRenderer(Renderer renderer) {
+        super.setRenderer(renderer);
+        this.render = (WebpRender) renderer;
+    }
+
+    @Override
+    public void invalidateDrawable(@NonNull Drawable drawable) {
+        render.setDrawable(drawable);
+        requestRender();
+    }
 
     @Override
     public void onDetachedFromWindow() {
@@ -88,6 +102,7 @@ public class WebPGLView extends GLSurfaceView {
                 .setAutoPlayAnimations(true)
                 .build();
         mDraweeHolder.setController(controller);
+        mDraweeHolder.getTopLevelDrawable();
     }
 
     public void setImageUri(Uri imageUri) {

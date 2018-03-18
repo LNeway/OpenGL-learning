@@ -1,3 +1,4 @@
+uniform mat4 uMVPMatrix;
 attribute vec3 aPos;
 attribute vec2 v_texCoord;
 varying vec2 outTexCoord;

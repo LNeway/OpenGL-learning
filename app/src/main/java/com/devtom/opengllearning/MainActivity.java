@@ -2,6 +2,7 @@ package com.devtom.opengllearning;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.media.Image;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -44,18 +45,19 @@ public class MainActivity extends Activity {
         WebPGLView view = (WebPGLView) this.findViewById(R.id.gl);
         view.setEGLContextClientVersion(2);
         view.setEGLConfigChooser(new MultisampleConfigChooser());
-        render = new WebpRender(this, view.getDraweeHolder());
+        render = new WebpRender(this);
         view.setRenderer(render);
-        view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        view.setImageUri("");
-        //Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/test");
-        //view.setImageUri(uri);
+        view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        //view.setImageUri("");
+        Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/texture");
+        view.setImageUri("http://s.lispon.moe/static/gift/20180315/risu.webp");
+
 
         imageView = (ImageView) this.findViewById(R.id.fresco_view);
     }
 
     public void setImage(Bitmap bitmap) {
-        //imageView.setImageBitmap(bitmap);
+        imageView.setImageBitmap(bitmap);
     }
 
 }

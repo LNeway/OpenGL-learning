@@ -9,6 +9,7 @@ import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.drawable.Drawable;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -33,13 +34,14 @@ import javax.microedition.khronos.opengles.GL10;
 public class WebpRender implements GLSurfaceView.Renderer {
     private Context context;
 
-    private DraweeHolder draweeHolder;
+    private Drawable drawable;
 
     private int width;
     private int height;
     private volatile Bitmap cacheBitmap;
 
     private int program;
+
     private final float vertext [] = {
             1, 1, 0,   // top right
             -1, 1, 0,  // top left
@@ -53,20 +55,21 @@ public class WebpRender implements GLSurfaceView.Renderer {
     private FloatBuffer verextBuffer = null;
     private ShortBuffer shortBuffer = null;
     private FloatBuffer texBuffer;
-    private IntBuffer pixs;
 
     private int v_position;
     private int tex_position;
     private int texture = -1;
     private int textureUniform;
+    private int matrixHandle;
+
 
     private float texure [] = {
-            0f, 0f,
-            1f, 0f,
-            1f, 1f,
-            0f, 1f };
+            1f, 0,  // bottom right
+            0, 0,  // bottom left
+            0, 1f,  // top left
+            1f, 1f };  // top right};
 
-    public WebpRender(Context context, DraweeHolder holder) {
+    public WebpRender(Context context) {
         this.context =  context;
         verextBuffer = ByteBuffer.allocateDirect(vertext.length * 4)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer().put(vertext);
@@ -79,7 +82,6 @@ public class WebpRender implements GLSurfaceView.Renderer {
         texBuffer = ByteBuffer.allocateDirect(texure.length * 4)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer().put(texure);
         texBuffer.position(0);
-        this.draweeHolder = holder;
     }
 
     @Override
@@ -106,57 +108,52 @@ public class WebpRender implements GLSurfaceView.Renderer {
 
         textureUniform = GLES20.glGetUniformLocation(program, "u_samplerTexture");
         GLES20.glUniform1i(textureUniform, 0);
+
+
+        matrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
-        //设置相机位置
         this.width = width;
         this.height = height;
         cacheBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        pixs = IntBuffer.allocate(height * width);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        Drawable drawable = draweeHolder.getTopLevelDrawable();
-        try {
-            MainUITask.getPix(context, cacheBitmap, drawable, width, height, pixs);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        cacheBitmap.eraseColor(Color.TRANSPARENT);
+        Canvas canvas = new Canvas(cacheBitmap);
+        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        if (context instanceof MainActivity) {
+            final MainActivity activity = (MainActivity) context;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activity.setImage(cacheBitmap);
+                }
+            });
         }
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BITS);
-        texture = Util.loadTexture(pixs, width, height, texture);
+        texture = Util.loadTexture(cacheBitmap, texture, false);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, position.length,
                 GLES20.GL_UNSIGNED_SHORT, shortBuffer);
+        try {
+            Thread.sleep(20);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static class MainUITask {
-        private static Handler handler = new Handler(Looper.getMainLooper());
-        public static void getPix(final Context  context, final @NonNull Bitmap cacheBitmap, final Drawable drawable,
-                                  final int width, final int height, final IntBuffer intBuffer) throws InterruptedException {
-            final CountDownLatch countDownLatch = new CountDownLatch(1);
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    cacheBitmap.eraseColor(Color.TRANSPARENT);
-                    Canvas canvas = new Canvas(cacheBitmap);
-                    canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
-                    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-                    drawable.draw(canvas);
-                    cacheBitmap.getPixels(intBuffer.array(), 0, width, 0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(intBuffer.array(), width, height, Bitmap.Config.ARGB_8888);
-                    MainActivity activity = (MainActivity) context;
-                    activity.setImage(bitmap);
-                    countDownLatch.countDown();
-                }
-            });
-
-            countDownLatch.await();
-        }
+    public void setDrawable(Drawable drawable) {
+        this.drawable = drawable;
     }
 }
