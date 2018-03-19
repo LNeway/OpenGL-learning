@@ -1,9 +1,8 @@
-attribute vec3 aPos;
-attribute vec2 v_texCoord;
-varying vec2 outTexCoord;
-
-void main()
-{
-    gl_Position =  vec4(aPos, 1.0);
-    outTexCoord = v_texCoord;
+uniform mat4 uMVPMatrix;
+attribute vec4 vPosition;
+attribute vec2 a_texCoord;
+varying vec2 v_texCoord;
+void main() {
+  gl_Position = uMVPMatrix * vPosition;
+  v_texCoord = a_texCoord;
 }

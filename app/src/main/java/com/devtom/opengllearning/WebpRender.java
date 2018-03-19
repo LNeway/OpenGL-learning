@@ -13,6 +13,7 @@ import android.opengl.Matrix;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.facebook.drawee.view.DraweeHolder;
 import com.facebook.drawee.view.SimpleDraweeView;
@@ -32,128 +33,174 @@ import javax.microedition.khronos.opengles.GL10;
  */
 
 public class WebpRender implements GLSurfaceView.Renderer {
-    private Context context;
 
-    private Drawable drawable;
-
-    private int width;
-    private int height;
-    private volatile Bitmap cacheBitmap;
-
-    private int program;
-
-    private final float vertext [] = {
+    private static final float[] VERTEX = {   // in counterclockwise order:
             1, 1, 0,   // top right
             -1, 1, 0,  // top left
             -1, -1, 0, // bottom left
             1, -1, 0,  // bottom right
     };
-
-    private final short position [] = {0, 1, 2, 2, 3, 0};
-
-
-    private FloatBuffer verextBuffer = null;
-    private ShortBuffer shortBuffer = null;
-    private FloatBuffer texBuffer;
-
-    private int v_position;
-    private int tex_position;
-    private int texture = -1;
-    private int textureUniform;
-    private int matrixHandle;
-
-
-    private float texure [] = {
+    private static final short[] VERTEX_INDEX = {
+            0, 1, 2, 0, 2, 3
+    };
+    private static final float[] TEX_VERTEX = {   // in clockwise order:
             1f, 0,  // bottom right
             0, 0,  // bottom left
             0, 1f,  // top left
-            1f, 1f };  // top right};
+            1f, 1f,  // top right
+    };
 
-    public WebpRender(Context context) {
-        this.context =  context;
-        verextBuffer = ByteBuffer.allocateDirect(vertext.length * 4)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer().put(vertext);
-        verextBuffer.position(0);
-
-        shortBuffer = ByteBuffer.allocateDirect(position.length * 2)
-                .order(ByteOrder.nativeOrder()).asShortBuffer().put(position);
-        shortBuffer.position(0);
-
-        texBuffer = ByteBuffer.allocateDirect(texure.length * 4)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer().put(texure);
-        texBuffer.position(0);
-    }
-
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-
-        program = GLES20.glCreateProgram();
-        int vertex = Util.createShade(GLES20.GL_VERTEX_SHADER,
-                Util.readTextResourceFromRaw(context, R.raw.texture_vertex));
-        int fragment = Util.createShade(GLES20.GL_FRAGMENT_SHADER,
-                Util.readTextResourceFromRaw(context, R.raw.texture_fragment));
-
-        GLES20.glAttachShader(program, vertex);
-        GLES20.glAttachShader(program, fragment);
-        GLES20.glLinkProgram(program);
-        GLES20.glUseProgram(program);
-
-        v_position = GLES20.glGetAttribLocation(program, "aPos");
-        GLES20.glEnableVertexAttribArray(v_position);
-        GLES20.glVertexAttribPointer(v_position, 3, GLES20.GL_FLOAT, false, 12, verextBuffer);
-
-        tex_position = GLES20.glGetAttribLocation(program, "v_texCoord");
-        GLES20.glEnableVertexAttribArray(tex_position);
-        GLES20.glVertexAttribPointer(tex_position, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
-
-        textureUniform = GLES20.glGetUniformLocation(program, "u_samplerTexture");
-        GLES20.glUniform1i(textureUniform, 0);
+    private final Context mContext;
+    private final FloatBuffer mVertexBuffer;
+    private final FloatBuffer mTexVertexBuffer;
+    private final ShortBuffer mVertexIndexBuffer;
 
 
-        matrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix");
-    }
+    private int mProgram;
+    private int mPositionHandle;
 
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES20.glViewport(0, 0, width, height);
-        this.width = width;
-        this.height = height;
-        cacheBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    }
+    private int mTexCoordHandle;
+    private int mTexSamplerHandle;
+    private int mTexName = -1;
+    private int matrixHandle;
 
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        cacheBitmap.eraseColor(Color.TRANSPARENT);
-        Canvas canvas = new Canvas(cacheBitmap);
-        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
+    private float[] mViewMatrix = new float[16];
+    private float[] mProjectMatrix = new float[16];
+    private float[] mMVPMatrix = new float[16];
 
-        if (context instanceof MainActivity) {
-            final MainActivity activity = (MainActivity) context;
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    activity.setImage(cacheBitmap);
-                }
-            });
-        }
+    private Drawable drawable;
+    private Bitmap cacheBitmap;
 
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BITS);
-        texture = Util.loadTexture(cacheBitmap, texture, false);
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, position.length,
-                GLES20.GL_UNSIGNED_SHORT, shortBuffer);
-        try {
-            Thread.sleep(20);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private int contentWidth;
+    private int contentHeight;
+    private int width;
+    private int height;
+
+    private boolean shouldChangeRespect;
+
+    public WebpRender(final Context context) {
+        mContext = context;
+        mVertexBuffer = ByteBuffer.allocateDirect(VERTEX.length * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer()
+                .put(VERTEX);
+        mVertexBuffer.position(0);
+
+        mVertexIndexBuffer = ByteBuffer.allocateDirect(VERTEX_INDEX.length * 2)
+                .order(ByteOrder.nativeOrder())
+                .asShortBuffer()
+                .put(VERTEX_INDEX);
+        mVertexIndexBuffer.position(0);
+
+        mTexVertexBuffer = ByteBuffer.allocateDirect(TEX_VERTEX.length * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer()
+                .put(TEX_VERTEX);
+        mTexVertexBuffer.position(0);
     }
 
     public void setDrawable(Drawable drawable) {
         this.drawable = drawable;
+    }
+
+    public void setContentSize(int width, int height) {
+        if (cacheBitmap != null && width == this.contentWidth && this.contentHeight == height) {
+            return;
+        }
+
+        if (cacheBitmap != null) {
+            cacheBitmap.recycle();
+        }
+
+        cacheBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        this.contentWidth = width;
+        this.contentHeight = height;
+        shouldChangeRespect = true;
+    }
+
+    @Override
+    public void onSurfaceCreated(GL10 unused, EGLConfig config) {
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        mProgram = GLES20.glCreateProgram();
+        int vertexShader = Util.createShade(GLES20.GL_VERTEX_SHADER, Util.readTextResourceFromRaw(mContext, R.raw.texture_vertex));
+        int fragmentShader = Util.createShade(GLES20.GL_FRAGMENT_SHADER, Util.readTextResourceFromRaw(mContext, R.raw.texture_fragment));
+        GLES20.glAttachShader(mProgram, vertexShader);
+        GLES20.glAttachShader(mProgram, fragmentShader);
+        GLES20.glLinkProgram(mProgram);
+        GLES20.glUseProgram(mProgram);
+
+        mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
+        mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texCoord");
+        mTexSamplerHandle = GLES20.glGetUniformLocation(mProgram, "s_texture");
+        matrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
+
+        GLES20.glEnableVertexAttribArray(mPositionHandle);
+        GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
+                12, mVertexBuffer);
+
+        GLES20.glEnableVertexAttribArray(mTexCoordHandle);
+        GLES20.glVertexAttribPointer(mTexCoordHandle, 2, GLES20.GL_FLOAT, false, 0,
+                mTexVertexBuffer);
+    }
+
+    @Override
+    public void onSurfaceChanged(GL10 unused, int width, int height) {
+        GLES20.glViewport(0, 0, width, height);
+        this.width = width;
+        this.height = height;
+        shouldChangeRespect = true;
+    }
+
+    @Override
+    public void onDrawFrame(GL10 unused) {
+        if (cacheBitmap != null) {
+            cacheBitmap.eraseColor(Color.TRANSPARENT);
+            Canvas canvas = new Canvas(cacheBitmap);
+            canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
+            if (drawable != null) {
+                drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                drawable.draw(canvas);
+            }
+
+            if (shouldChangeRespect) {
+                int w = contentWidth;
+                int h = contentHeight;
+                float sWH = w / (float) h;
+                float sWidthHeight = width / (float) height;
+                if (width > height) {
+                    if (sWH > sWidthHeight) {
+                        Matrix.orthoM(mProjectMatrix, 0, -sWidthHeight * sWH, sWidthHeight * sWH, -1, 1, 3, 7);
+                    } else {
+                        Matrix.orthoM(mProjectMatrix, 0, -sWidthHeight / sWH, sWidthHeight / sWH, -1, 1, 3, 7);
+                    }
+                } else {
+                    if (sWH > sWidthHeight) {
+                        Matrix.orthoM(mProjectMatrix, 0, -1, 1, -1 / sWidthHeight * sWH, 1 / sWidthHeight * sWH, 3, 7);
+                    } else {
+                        Matrix.orthoM(mProjectMatrix, 0, -1, 1, -sWH / sWidthHeight, sWH / sWidthHeight, 3, 7);
+                    }
+                }
+                //设置相机位置
+                Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 5.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+                //计算变换矩阵
+                Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
+            } else {
+                shouldChangeRespect = false;
+            }
+
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glUniformMatrix4fv(matrixHandle, 1, false, mMVPMatrix, 0);
+            GLES20.glUniform1i(mTexSamplerHandle, 0);
+
+            mTexName = Util.loadTexture(cacheBitmap, mTexName, false);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexName);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, VERTEX_INDEX.length,
+                    GLES20.GL_UNSIGNED_SHORT, mVertexIndexBuffer);
+        } else {
+            Log.e("Null", "Content not ready...");
+        }
+
     }
 }

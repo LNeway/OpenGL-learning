@@ -11,8 +11,8 @@
 
     <com.devtom.opengllearning.WebPGLView
         android:id="@+id/gl"
-        android:layout_width="240dp"
-        android:layout_height="240dp"
+        android:layout_width="360dp"
+        android:layout_height="203dp"
         android:layout_gravity="center_horizontal"
         />
 
@@ -24,8 +24,8 @@
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/fresco_view2"
-        android:layout_width="150dp"
-        android:layout_height="150dp" />
+        android:layout_width="360dp"
+        android:layout_height="360dp" />
 
 
 </LinearLayout>

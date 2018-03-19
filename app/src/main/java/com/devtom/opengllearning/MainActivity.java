@@ -2,7 +2,7 @@ package com.devtom.opengllearning;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.media.Image;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -11,12 +11,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.facebook.imagepipeline.image.ImageInfo;
-
-import java.io.File;
 
 public class MainActivity extends Activity {
 
@@ -43,15 +39,17 @@ public class MainActivity extends Activity {
         Fresco.initialize(this);
         setContentView(R.layout.activity_main);
 
+        Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/jordan");
+
         WebPGLView view = (WebPGLView) this.findViewById(R.id.gl);
         view.setEGLContextClientVersion(2);
-        view.setEGLConfigChooser(new MultisampleConfigChooser());
+        view.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        view.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        view.setZOrderOnTop(true);
         render = new WebpRender(this);
         view.setRenderer(render);
         view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        Uri uri = Uri.parse("android.resource://com.devtom.opengllearning/drawable/jordan");
         view.setImageUri(uri);
-
         imageView = (ImageView) this.findViewById(R.id.fresco_view);
 
         DraweeController controller = Fresco.newDraweeControllerBuilder()
@@ -59,8 +57,8 @@ public class MainActivity extends Activity {
                 .setAutoPlayAnimations(true)
                 .build();
 
-        simpleDraweeView = (SimpleDraweeView) this.findViewById(R.id.fresco_view2);
-        simpleDraweeView.setController(controller);
+//        simpleDraweeView = (SimpleDraweeView) this.findViewById(R.id.fresco_view2);
+//        simpleDraweeView.setController(controller);
 
 
     }
