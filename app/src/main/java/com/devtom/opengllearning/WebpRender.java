@@ -10,20 +10,12 @@ import android.graphics.drawable.Drawable;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.os.Handler;
-import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.util.Log;
-
-import com.facebook.drawee.view.DraweeHolder;
-import com.facebook.drawee.view.SimpleDraweeView;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.concurrent.CountDownLatch;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -78,6 +70,7 @@ public class WebpRender implements GLSurfaceView.Renderer {
 
     private boolean shouldChangeRespect;
 
+
     public WebpRender(final Context context) {
         mContext = context;
         mVertexBuffer = ByteBuffer.allocateDirect(VERTEX.length * 4)
@@ -104,6 +97,7 @@ public class WebpRender implements GLSurfaceView.Renderer {
     }
 
     public void setContentSize(int width, int height) {
+        mTexName = -1;
         if (cacheBitmap != null && width == this.contentWidth && this.contentHeight == height) {
             return;
         }
@@ -185,7 +179,6 @@ public class WebpRender implements GLSurfaceView.Renderer {
                 Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 5.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
                 //计算变换矩阵
                 Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
-            } else {
                 shouldChangeRespect = false;
             }
 
@@ -194,6 +187,7 @@ public class WebpRender implements GLSurfaceView.Renderer {
             GLES20.glUniform1i(mTexSamplerHandle, 0);
 
             mTexName = Util.loadTexture(cacheBitmap, mTexName, false);
+
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexName);
             GLES20.glDrawElements(GLES20.GL_TRIANGLES, VERTEX_INDEX.length,

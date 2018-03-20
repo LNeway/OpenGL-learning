@@ -8,7 +8,6 @@ import android.opengl.GLSurfaceView;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.controller.BaseControllerListener;
@@ -24,7 +23,7 @@ import com.facebook.imagepipeline.image.ImageInfo;
 public class WebPGLView extends GLSurfaceView {
 
     private DraweeHolder mDraweeHolder;
-    private WebPRender render;
+    private WebpRender render;
 
     public WebPGLView(Context context) {
         super(context);
@@ -42,19 +41,14 @@ public class WebPGLView extends GLSurfaceView {
         mDraweeHolder.getTopLevelDrawable().setCallback(this);
     }
 
-
     @Override
     public void setRenderer(Renderer renderer) {
         super.setRenderer(renderer);
-        this.render = (WebPRender) renderer;
+        this.render = (WebpRender) renderer;
     }
-
-    private long last;
 
     @Override
     public void invalidateDrawable(@NonNull Drawable drawable) {
-        Log.e("invalidateDrawable", "value is " + (System.currentTimeMillis() - last));
-        last = System.currentTimeMillis();
         render.setDrawable(drawable);
         requestRender();
     }
@@ -100,6 +94,7 @@ public class WebPGLView extends GLSurfaceView {
         DraweeController controller = Fresco.newDraweeControllerBuilder()
                 .setUri(imageUri)
                 .setAutoPlayAnimations(true)
+                .setOldController(mDraweeHolder.getController())
                 .setControllerListener(new BaseControllerListener<ImageInfo>() {
                     @Override
                     public void onFinalImageSet(String id, @Nullable final ImageInfo imageInfo, @Nullable Animatable animatable) {
@@ -111,15 +106,12 @@ public class WebPGLView extends GLSurfaceView {
                             }
                         });
                     }
-                })
-                .build();
+                }).build();
         mDraweeHolder.setController(controller);
     }
 
     public DraweeHolder getDraweeHolder() {
         return mDraweeHolder;
     }
-
-
 
 }
